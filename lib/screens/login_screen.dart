@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/app_theme.dart';
 import 'main_shell.dart';
 
@@ -10,8 +11,41 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _obscure = true;
   bool _rememberDevice = true;
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _signIn() async {
+    setState(() => _loading = true);
+    try {
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      if (mounted) {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const MainShell()));
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('حدث خطأ غير متوقع: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,14 +94,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     const Align(
                       alignment: AlignmentDirectional.centerStart,
-                      child: Text('رقم الهاتف أو البريد الإلكتروني', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                      child: Text('البريد الإلكتروني', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                     ),
                     const SizedBox(height: 6),
                     TextField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: 'مثال: 0555123456 أو name@email.com',
-                        prefixText: '+213 / +966   ',
-                        prefixStyle: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                        hintText: 'name@email.com',
                         suffixIcon: const Icon(Icons.person_outline),
                         filled: true,
                         fillColor: AppColors.background,
@@ -81,6 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 6),
                     TextField(
+                      controller: _passwordController,
                       obscureText: _obscure,
                       decoration: InputDecoration(
                         suffixIcon: const Icon(Icons.lock_outline),
@@ -108,30 +143,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const MainShell()));
-                      },
-                      icon: const Icon(Icons.lock_open_rounded),
-                      label: const Text('تسجيل الدخول'),
-                    ),
-                    const SizedBox(height: 10),
-                    const Row(children: [
-                      Expanded(child: Divider()),
-                      Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('أو', style: TextStyle(color: AppColors.textMuted))),
-                      Expanded(child: Divider()),
-                    ]),
-                    const SizedBox(height: 10),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const MainShell()));
-                      },
-                      icon: const Icon(Icons.fingerprint_rounded),
-                      label: const Text('الدخول السريع بالبصمة أو الوجه'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: AppColors.chipBackground),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
+                      onPressed: _loading ? null : _signIn,
+                      icon: _loading
+                          ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                          : const Icon(Icons.lock_open_rounded),
+                      label: Text(_loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'),
                     ),
                   ],
                 ),

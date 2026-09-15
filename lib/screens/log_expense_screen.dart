@@ -11,7 +11,7 @@ class LogExpenseScreen extends StatefulWidget {
 
 class _LogExpenseScreenState extends State<LogExpenseScreen> {
   bool _isDzd = true;
-  final _amountController = TextEditingController(text: '3850');
+  final _amountController = TextEditingController(text: '0');
   final _itemController = TextEditingController();
   int _categoryIndex = 2; // التموين والبقالة selected by default, matching mockup
   int _payerIndex = 0;

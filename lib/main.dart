@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/onboarding_screen.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://fywfmnseuaiklysetdty.supabase.co',
+    publishableKey: 'sb_publishable_JZkg1jkrduQ0Jz48Xjtanw_0I_78X5l',
+  );
+
   runApp(const MasarifApp());
 }
 
